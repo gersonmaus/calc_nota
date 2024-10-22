@@ -8,7 +8,7 @@ class TarefaPresenter {
 
   TarefaPresenter(this.db);
 
-  // Carregar JSON trasnformando em uma lista de tarefas
+  // Carregar JSON transformando em uma lista de tarefas
   Future<List<Tarefa>> carregarTarefas() async {
     final jsonString = await rootBundle.loadString('assets/notas.json');
     final List<dynamic> jsonData = json.decode(jsonString);
@@ -27,4 +27,6 @@ class TarefaPresenter {
       await db.inserirTarefa(tarefa);
     }
   }
+  
 }
+

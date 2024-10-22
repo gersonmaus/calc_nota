@@ -13,87 +13,121 @@ class TarefaView extends StatefulWidget {
 
 class _TarefasViewState extends State<TarefaView> {
   late Future<List<Tarefa>> _tarefas;
+    late Future<List<Tarefa>> _tmp;
+  List<Tarefa> _tarefasBanco = [];
+  List<Tarefa> _tarefasFiltradas = [];
+  String _filtro = '';
 
   @override
   void initState() {
     super.initState();
     _tarefas = widget.presenter.carregarTarefas();
+    _tarefas.then((tarefas) {
+      setState(() {
+        _tarefasBanco = tarefas;
+        _tarefasFiltradas = tarefas;
+      });
+    });
+  }
+
+  // Método para filtrar as tarefas com base no título ou outro critério
+  void _filtrarTarefas(String filtro) {
+    setState(() {
+      _filtro = filtro;
+      if (_filtro.isEmpty) {
+        _tmp = widget.presenter.carregarTarefas();
+        _tmp.then((tarefas) {
+          setState(() {
+            _tarefasFiltradas = tarefas;
+          });
+        });
+      }else{
+      _tarefasFiltradas = _tarefasFiltradas
+          .where((tarefa) =>
+              tarefa.titulo.toLowerCase().contains(filtro.toLowerCase()))
+          .toList();
+      }
+    });
+  }
+
+/// Atualizar a lista com as notas
+  void _carregarTarefas(){
+    _tarefas = widget.presenter.carregarTarefas();
+    _tarefas.then((tarefas) {
+      setState(() {
+        _tarefasBanco = tarefas;
+        _tarefasFiltradas = tarefas;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Scaffold é a estrutura básica de layout em Flutter, que fornece o esqueleto de uma tela com suporte para barra de aplicativo, corpo, botão de ação flutuante, etc.
     return Scaffold(
       appBar: AppBar(
-        // AppBar cria uma barra no topo da tela com o título "Notas dos Trabalhos"
         title: Text('Notas dos Trabalhos'),
       ),
-      body: FutureBuilder<List<Tarefa>>(
-        // FutureBuilder é um widget que constrói a interface com base no estado de um Future. Aqui, ele está esperando a lista de tarefas (_tarefas).
-        future: _tarefas,
-        builder: (context, snapshot) {
-          // O 'builder' define a lógica de construção da interface dependendo do estado do Future (snapshot).
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: InputDecoration(
+                labelText: 'Filtrar Tarefas',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                _filtrarTarefas(value); // Chama a função de filtro ao alterar o texto
+              },
+            ),
+          ),
+          Expanded(
+            child: FutureBuilder<List<Tarefa>>(
+              future: _tarefas,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Erro ao carregar tarefas'));
+                }
 
-          // Caso o Future ainda esteja sendo processado (estado de espera), mostra um indicador de progresso circular.
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-          // Se houver um erro durante o carregamento das tarefas, exibe uma mensagem de erro.
-          else if (snapshot.hasError) {
-            return Center(child: Text('Erro ao carregar tarefas'));
-          }
+                final tarefas = _tarefasFiltradas;
 
-          // Quando o Future é completado com sucesso, snapshot.data contém a lista de tarefas.
-          final tarefas =
-              snapshot.data!; // O uso de '!' indica que 'tarefas' não é nulo.
+                return ListView.builder(
+                  itemCount: tarefas.length,
+                  itemBuilder: (context, index) {
+                    final tarefa = tarefas[index];
 
-          // ListView.builder é um widget que constrói uma lista de forma eficiente, apenas criando os itens visíveis na tela.
-          return ListView.builder(
-            itemCount:
-                tarefas.length, // Define o número de itens (tarefas) na lista.
-            itemBuilder: (context, index) {
-              final tarefa =
-                  tarefas[index]; // Acessa a tarefa na posição atual (index).
-
-              // Cada item da lista é um ListTile, que é um widget de linha simples com título, subtítulo, e um campo de entrada de texto.
-              return ListTile(
-                title: Text(tarefa.titulo), // Exibe o título da tarefa.
-                subtitle: Text(
-                    'Peso: ${tarefa.peso}'), // Exibe o peso da tarefa como subtítulo.
-
-                // trailing é um widget que aparece no final da linha. Aqui, contém um TextField para inserir a nota da tarefa.
-                trailing: Container(
-                  width: 100, // Define a largura do campo de texto.
-                  child: TextField(
-                    // Define a decoração do campo de texto com um rótulo "Nota".
-                    decoration: InputDecoration(labelText: 'Nota'),
-                    keyboardType: TextInputType
-                        .number, // Define o tipo de teclado como numérico.
-                    onChanged: (value) {
-                      // Atualiza a nota da tarefa à medida que o valor no campo de texto muda.
-                      tarefa.nota = double.tryParse(
-                          value); // Converte o valor digitado para double e atribui à tarefa.
-                    },
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                    return ListTile(
+                      title: Text(tarefa.titulo),
+                      subtitle: Text('Peso: ${tarefa.peso}'),
+                      trailing: Container(
+                        width: 100,
+                        child: TextField(
+                          decoration: InputDecoration(labelText: 'Nota'),
+                          keyboardType: TextInputType.number,
+                          onChanged: (value) {
+                            tarefa.nota = double.tryParse(value);
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
-      // floatingActionButton é um botão de ação flutuante que permite ao usuário salvar as notas.
       floatingActionButton: FloatingActionButton(
-        child: Icon(
-            Icons.save), // Define o ícone do botão como um ícone de "salvar".
+        child: Icon(Icons.save),
         onPressed: () async {
-          // Quando o botão é pressionado, aguarda-se a lista de tarefas (_tarefas) e chama-se o método para salvar as notas.
           final tarefas = await _tarefas;
           await widget.presenter.salvarTarefas(tarefas);
-
-          // Após salvar as notas, exibe uma mensagem de confirmação usando SnackBar.
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Notas salvas com sucesso')),
           );
+          //_carregarTarefas();
         },
       ),
     );

@@ -45,13 +45,13 @@ class TarefaDao {
     // Comando SQL para criar a tabela 'tarefas' com suas colunas e tipos de dados
     await db.execute('''
       CREATE TABLE tarefas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,  // Chave primária auto-incrementada
-        tipo TEXT,                             // Coluna 'tipo' para armazenar o tipo de tarefa
-        titulo TEXT,                           // Coluna 'titulo' para armazenar o título da tarefa
-        periodo TEXT,                          // Coluna 'periodo' para armazenar o período da tarefa
-        peso REAL,                             // Coluna 'peso' para armazenar o peso da tarefa
-        nota REAL,                             // Coluna 'nota' para armazenar a nota atribuída à tarefa
-        timestamp TEXT                         // Coluna 'timestamp' para armazenar a data/hora
+        id INTEGER PRIMARY KEY AUTOINCREMENT,  
+        tipo TEXT,                             
+        titulo TEXT,                           
+        periodo TEXT,                          
+        peso REAL,                             
+        nota REAL,                             
+        timestamp TEXT                         
       )
     ''');
   }
